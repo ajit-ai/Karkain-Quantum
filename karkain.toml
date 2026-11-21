@@ -1,0 +1,7 @@
+name = "karkain-quantum"
+version = "0.1.0-dev"
+description = "Quantum circuit data model for Karkain v1.2.0"
+license = "MIT"
+targets = ["native"]
+
+[dependencies]

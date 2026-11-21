@@ -1,0 +1,50 @@
+// Native tests for Karkain-Quantum.
+
+func sample_circuit() {
+    let c = add_gate(new_circuit("bell"), "H", 0)
+    c = add_gate(c, "X", 1)
+    return add_gate(c, "X", 1)
+}
+
+func test_new_circuit() {
+    let c = new_circuit("demo")
+    assert_eq(circuit_name(c), "demo")
+    assert_eq(gate_count(c), 0)
+}
+
+func test_add_gate() {
+    let c = sample_circuit()
+    assert_eq(gate_count(c), 3)
+    assert_eq(gate_at(c, 0), "H:0")
+    assert_eq(gate_at(c, 2), "X:1")
+    assert_eq(gate_at(c, 9), "")
+}
+
+func test_x_gate_count() {
+    let c = sample_circuit()
+    assert_eq(x_gate_count(c, 1), 2)
+    assert_eq(x_gate_count(c, 0), 0)
+}
+
+func test_measure_preview() {
+    let c = sample_circuit()
+    assert_eq(measure_preview(c, 1), 0)
+    let one = add_gate(new_circuit("one"), "X", 0)
+    assert_eq(measure_preview(one, 0), 1)
+    assert_eq(measure_preview(new_circuit("empty"), 0), 0)
+}
+
+func test_gate_encoding() {
+    let c = add_gate(new_circuit("c"), "Z", 3)
+    assert_eq(gate_at(c, 0), "Z:3")
+}
+
+func test_circuit_summary() {
+    assert_eq(circuit_summary(sample_circuit()), "bell:gates=3")
+}
+
+func test_multiple_qubits() {
+    let c = add_gate(add_gate(new_circuit("c"), "X", 0), "X", 1)
+    assert_eq(measure_preview(c, 0), 1)
+    assert_eq(measure_preview(c, 1), 1)
+}

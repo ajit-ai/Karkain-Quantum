@@ -1,0 +1,11 @@
+// Integration verification for the Karkain-Quantum public API.
+import quantum
+
+func main() {
+    let c = add_gate(add_gate(new_circuit("demo"), "X", 0), "X", 0)
+    assert_eq(gate_count(c), 2)
+    assert_eq(measure_preview(c, 0), 0)
+    println(circuit_summary(c))
+    let one = add_gate(new_circuit("one"), "X", 0)
+    assert_eq(measure_preview(one, 0), 1)
+}

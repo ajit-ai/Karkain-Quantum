@@ -1,0 +1,12 @@
+// Karkain-Quantum runnable example: a deterministic gate-model preview.
+import quantum
+
+func main() {
+    let c = new_circuit("not-gate")
+    c = add_gate(c, "X", 0)
+    c = add_gate(c, "H", 1)
+
+    println(circuit_summary(c))
+    println("measure0=" + str(measure_preview(c, 0)))
+    println("measure1=" + str(measure_preview(c, 1)))
+}
