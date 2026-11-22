@@ -66,3 +66,181 @@ public func measure_preview(circuit, qubit) {
 public func circuit_summary(circuit) {
     return circuit_name(circuit) + ":gates=" + str(gate_count(circuit))
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2 additions. Phase 1 gate-data API is unchanged.
+// Probe evidence: no complex-number literal ('i' undefined), no binary/bytes
+// API, and sqrt/abs/pow are stubs. A state-vector simulator with complex
+// amplitudes is therefore BLOCKED. Everything below is circuit metadata,
+// deterministic single-bit preview and provider contracts.
+
+// new_register creates a qubit qubitreg model.
+public func new_register(size) {
+    let r = []
+    r = push(r, size)
+    return r
+}
+
+// register_size returns a qubitreg size.
+public func register_size(qubitreg) { return qubitreg[0] }
+
+// qubit_valid reports whether an index fits a qubitreg.
+public func qubit_valid(qubitreg, index) {
+    if index < 0 { return false }
+    return index < register_size(qubitreg)
+}
+
+// valid_gate reports whether a gate name is defined.
+public func valid_gate(name) {
+    if name == "H" { return true }
+    if name == "X" { return true }
+    if name == "Y" { return true }
+    if name == "Z" { return true }
+    if name == "S" { return true }
+    if name == "T" { return true }
+    if name == "CNOT" { return true }
+    if name == "MEASURE" { return true }
+    return false
+}
+
+// gate_arity returns the qubit arity of a gate.
+public func gate_arity(name) {
+    if name == "CNOT" { return 2 }
+    if name == "MEASURE" { return 1 }
+    return 1
+}
+
+// compose_circuits appends all gates of b to a.
+public func compose_circuits(a, b) {
+    let out = a
+    let i = 0
+    while (i < gate_count(b)) {
+        out = push(out, gate_at(b, i))
+        i = i + 1
+    }
+    return out
+}
+
+// circuit_depth returns the sequential depth of a circuit.
+public func circuit_depth(circuit) { return gate_count(circuit) }
+
+// validate_circuit rejects undefined gates.
+public func validate_circuit(circuit) {
+    let i = 0
+    while (i < gate_count(circuit)) {
+        let entry = gate_at(circuit, i)
+        let sep = 0
+        let j = 0
+        while (j < len(entry)) {
+            if entry[j] == ":" { sep = j }
+            j = j + 1
+        }
+        let name = ""
+        let k = 0
+        while (k < sep) {
+            name = name + entry[k]
+            k = k + 1
+        }
+        if valid_gate(name) == false { return false }
+        i = i + 1
+    }
+    return true
+}
+
+// new_measurement creates a measurement record with shots.
+public func new_measurement(shots) {
+    let m = []
+    m = push(m, shots)
+    m = push(m, 0)
+    return m
+}
+
+// measurement_shots returns the shot count.
+public func measurement_shots(measurement) { return measurement[0] }
+
+// add_outcome records a measurement outcome count.
+public func add_outcome(measurement, count) {
+    let out = []
+    out = push(out, measurement[0])
+    out = push(out, measurement[1] + count)
+    return out
+}
+
+// outcome_count returns recorded outcomes.
+public func outcome_count(measurement) { return measurement[1] }
+
+// measurement_probability computes a deterministic frequency estimate.
+public func measurement_probability(count, shots) {
+    if shots < 1 { return 0.0 }
+    return (1.0 * count) / shots
+}
+
+// new_backend declares a simulator/hardware backend interface.
+public func new_backend(name, capabilities) {
+    let b = []
+    b = push(b, name)
+    b = push(b, capabilities)
+    return b
+}
+
+// backend_supports reports whether a backend capability is advertised.
+public func backend_supports(backend, capability) { return contains(backend[1], capability) }
+
+// backend_contract documents the missing execution operation.
+public func backend_contract() { return "provider.quantum.execute(circuit,shots)" }
+
+// state_vector_contract documents the blocked complex state-vector engine.
+public func state_vector_contract() { return "quantum.statevector(complex-amplitudes)" }
+
+// estimate_qubits estimates required qubits from gates.
+public func estimate_qubits(circuit) {
+    let n = 0
+    let i = 0
+    while (i < gate_count(circuit)) {
+        let entry = gate_at(circuit, i)
+        if contains(entry, "CNOT") { n = n + 2 }
+        i = i + 1
+    }
+    return n
+}
+
+// new_exec_request creates a circuit execution request.
+public func new_exec_request(id, circuit, shots) {
+    let r = []
+    r = push(r, id)
+    r = push(r, circuit)
+    r = push(r, shots)
+    return r
+}
+
+// exec_shots returns the requested shot count.
+public func exec_shots(request) { return request[2] }
+
+// new_exec_result creates an execution result record.
+public func new_exec_result(id, counts) {
+    let r = []
+    r = push(r, id)
+    r = push(r, counts)
+    return r
+}
+
+// exec_counts returns recorded counts.
+public func exec_counts(result) { return result[1] }
+
+// quantum_error maps error codes to stable names.
+public func quantum_error(code) {
+    if code == 1 { return "invalid_gate" }
+    if code == 2 { return "invalid_qubit" }
+    if code == 3 { return "backend_unavailable" }
+    return "unknown"
+}
+
+// quantum_experiment creates experiment provenance.
+public func quantum_experiment(id) {
+    let e = []
+    e = push(e, id)
+    return e
+}
+
+// scientific_contract documents Quantum to Scientific integration.
+public func scientific_contract() { return "scientific.measurement(outcomes)" }

@@ -34,7 +34,7 @@ try {
     $out = Invoke-Karkain @('test', $combined); $code = $LASTEXITCODE
     Write-Output "TEST native: exit=$code"; Write-Output $out
     if ($code -ne 0) { throw 'native tests failed' }
-    if ($out -notlike '*7 tests, 7 passed, 0 failed*') { throw 'native test summary mismatch' }
+    if ($out -notlike '*16 tests, 16 passed, 0 failed*') { throw 'native test summary mismatch' }
 
     $verify = Join-Path $repo 'src\verify.kark'
     $out = Invoke-Karkain @('run', $verify); $code = $LASTEXITCODE
@@ -54,6 +54,16 @@ try {
     $out = Invoke-Karkain @('run', (Join-Path $exDir 'circuit_demo.kark')); $code = $LASTEXITCODE
     Write-Output "RUN example: exit=$code"; Write-Output $out
     if ($code -ne 0) { throw 'example failed' }    if ($out -notlike '*measure0=1*') { throw 'example check missing' }
+    $advDir = Join-Path $tmp 'advanced'
+    New-Item -ItemType Directory -Path $advDir | Out-Null
+    Copy-Item -LiteralPath $module -Destination (Join-Path $advDir 'quantum.kark')
+    Copy-Item -LiteralPath (Join-Path $repo 'examples\circuit_analysis.kark') -Destination (Join-Path $advDir 'circuit_analysis.kark')
+    $out = Invoke-Karkain @('run', (Join-Path $advDir 'circuit_analysis.kark')); $code = $LASTEXITCODE
+    Write-Output "RUN advanced example: exit=$code"; Write-Output $out
+    if ($code -ne 0) { throw 'advanced example failed' }
+    if ($out -notlike '*depth=2*') { throw 'advanced depth output missing' }
+    if ($out -notlike '*prob=0.6*') { throw 'advanced measurement output missing' }
+
     Write-Output 'VERIFY: ALL GATES PASSED'
 }
 finally {

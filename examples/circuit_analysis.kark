@@ -1,0 +1,14 @@
+// Karkain-Quantum Phase 2 example: circuit composition and measurement model.
+import quantum
+
+func main() {
+    let c = add_gate(add_gate(new_circuit("bell"), "H", 0), "CNOT", 0)
+    println(circuit_summary(c))
+    println("depth=" + str(circuit_depth(c)))
+    println("valid=" + str(validate_circuit(c)))
+    println("qubits=" + str(estimate_qubits(c)))
+
+    let m = add_outcome(new_measurement(10), 6)
+    println("prob=" + str(measurement_probability(6, measurement_shots(m))))
+    println("backend=" + str(backend_supports(new_backend("test", "measure"), "hardware")))
+}

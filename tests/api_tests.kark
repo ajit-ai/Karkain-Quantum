@@ -48,3 +48,81 @@ func test_multiple_qubits() {
     assert_eq(measure_preview(c, 0), 1)
     assert_eq(measure_preview(c, 1), 1)
 }
+
+// --- Phase 2 regression ---
+
+func test_phase1_regression() {
+    let c = add_gate(new_circuit("demo"), "X", 0)
+    assert_eq(gate_count(c), 1)
+    assert_eq(gate_at(c, 0), "X:0")
+    assert_eq(measure_preview(c, 0), 1)
+}
+
+// --- Phase 2 additions ---
+
+func test_registers() {
+    let r = new_register(3)
+    assert_eq(register_size(r), 3)
+    assert(qubit_valid(r, 2))
+    assert(qubit_valid(r, 3) == false)
+    assert(qubit_valid(r, -1) == false)
+}
+
+func test_gate_definitions() {
+    assert(valid_gate("H"))
+    assert(valid_gate("CNOT"))
+    assert(valid_gate("BOGUS") == false)
+    assert_eq(gate_arity("CNOT"), 2)
+    assert_eq(gate_arity("X"), 1)
+}
+
+func test_circuit_composition() {
+    let a = add_gate(new_circuit("a"), "H", 0)
+    let b = add_gate(new_circuit("b"), "X", 1)
+    let c = compose_circuits(a, b)
+    assert_eq(gate_count(c), 2)
+    assert_eq(circuit_depth(c), 2)
+    assert(validate_circuit(c))
+    let bad = add_gate(new_circuit("bad"), "NOPE", 0)
+    assert(validate_circuit(bad) == false)
+}
+
+func test_measurement() {
+    let m = add_outcome(add_outcome(new_measurement(10), 6), 4)
+    assert_eq(measurement_shots(m), 10)
+    assert_eq(outcome_count(m), 10)
+    assert_eq(outcome_count(new_measurement(10)), 0)
+    assert_eq(measurement_probability(6, 10), 0.6)
+    assert_eq(measurement_probability(1, 0), 0.0)
+}
+
+func test_backend_interface() {
+    let b = new_backend("test", "circuits,measure")
+    assert(backend_supports(b, "measure"))
+    assert(backend_supports(b, "hardware") == false)
+    assert_eq(backend_contract(), "provider.quantum.execute(circuit,shots)")
+    assert_eq(state_vector_contract(), "quantum.statevector(complex-amplitudes)")
+}
+
+func test_resource_estimation() {
+    let c = add_gate(add_gate(new_circuit("c"), "H", 0), "CNOT", 0)
+    assert_eq(estimate_qubits(c), 2)
+    assert_eq(estimate_qubits(new_circuit("empty")), 0)
+}
+
+func test_execution_models() {
+    let c = add_gate(new_circuit("c"), "X", 0)
+    let req = new_exec_request("r1", c, 100)
+    assert_eq(exec_shots(req), 100)
+    let res = new_exec_result("r1", 100)
+    assert_eq(exec_counts(res), 100)
+}
+
+func test_errors_and_contracts() {
+    assert_eq(quantum_error(1), "invalid_gate")
+    assert_eq(quantum_error(2), "invalid_qubit")
+    assert_eq(quantum_error(3), "backend_unavailable")
+    assert_eq(quantum_error(9), "unknown")
+    assert_eq(quantum_experiment("e1")[0], "e1")
+    assert_eq(scientific_contract(), "scientific.measurement(outcomes)")
+}
